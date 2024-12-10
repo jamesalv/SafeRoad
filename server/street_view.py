@@ -48,7 +48,18 @@ def get_street_view_image(lat, lng, heading):
     
     response = requests.get(STREET_VIEW_URL, params=params)
     image = Image.open(BytesIO(response.content))
-    return image
+    street_name = get_street_name(lat, lng)
+    
+    # Generate result dict
+    result = {
+        "lat": lat,
+        "lon": lng,
+        "heading": heading,
+        "street_name": street_name,
+        "img" : image
+    }
+    
+    return result
 
 def get_pano_id(lat, lng):
     """
@@ -91,24 +102,22 @@ def capture_images_in_radius(center_lat, center_lon, radius_km, num_images):
     """
 
     points = generate_points_in_radius(center_lat, center_lon, radius_km, num_images)
-    images = []
+    results = []
 
     for point in points:
         lat, lon = point
     
         # Get images in 4 directions
         for heading in range(0, 360, 90):
-            image = get_street_view_image(lat, lon, heading)
-            images.append(image)
+            image_result = get_street_view_image(lat, lon, heading)
+            results.append(image_result)
 
-    return images
+    return results
 
 # Test doang sich
 # if __name__ == "__main__":
 #     lat = -6.1753924
 #     lng = 106.8271528
-#     street_name = get_street_name(lat, lng)
-#     print(street_name)
 #     images = capture_images_in_radius(lat, lng, 0.5, 2)
-#     for image in images:
-#         image.show()
+    # for image in images:
+    #     image.show()

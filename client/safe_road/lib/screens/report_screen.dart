@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import '../models/road_damage_report.dart';
+import 'package:safe_road/utils/theme.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -40,7 +41,7 @@ class _ReportScreenState extends State<ReportScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
+          SafeRoadTheme.errorSnackBar('Error picking image: $e'),
         );
       }
     }
@@ -49,8 +50,8 @@ class _ReportScreenState extends State<ReportScreen>
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate() || _imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please fill all required fields and add an image')),
+        SafeRoadTheme.errorSnackBar(
+            'Please fill all required fields and add an image'),
       );
       return;
     }
@@ -58,58 +59,42 @@ class _ReportScreenState extends State<ReportScreen>
     setState(() => _isLoading = true);
 
     try {
-      // Create the report object
       final report = RoadDamageReport(
         imagePath: _imageFile!.path,
         description: _descriptionController.text,
         location: _locationController.text,
       );
 
-      // Create multipart request
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse(
-            'http://localhost:8000/report'), 
+        Uri.parse("http://20.81.214.110:5000/report"),
       );
 
-      // Add image file
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          _imageFile!.path,
-        ),
+        await http.MultipartFile.fromPath('image', _imageFile!.path),
       );
 
-      // Add other fields
       request.fields.addAll({
         'description': report.description,
         'location': report.location,
       });
 
-      // Send the request
       var response = await request.send();
-      debugPrint('Response: $response');
 
       if ((response.statusCode == 200 || response.statusCode == 201) &&
           mounted) {
-        if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-                    'No road damage detected, please input a valid image'
-                    'Suggestions: Try taking a picture of a pothole, crack, or other road damage with clear visibility')),
-          );
-        }else if (response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Report submitted successfully')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          response.statusCode == 200
+              ? SafeRoadTheme.errorSnackBar(
+                  'No road damage detected. Please provide a clearer image.')
+              : SafeRoadTheme.successSnackBar('Report submitted successfully!'),
+        );
       } else {
         throw Exception('Failed to submit report');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error submitting report: $e')),
+        SafeRoadTheme.errorSnackBar('Error submitting report: $e'),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -121,10 +106,32 @@ class _ReportScreenState extends State<ReportScreen>
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Report Road Damage'),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: Image.asset(
+                'assets/SafeRoad Text Black.png',
+                height: 25,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 6), // Added spacing
+            const Text(
+              'REPORT',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: SafeRoadTheme.background,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: SafeRoadTheme.loadingIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
@@ -132,60 +139,81 @@ class _ReportScreenState extends State<ReportScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Image picker section
+                    // Image preview section
                     if (_imageFile != null)
-                      Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Image.file(
-                            _imageFile!,
-                            height: 400,
-                            width: double.infinity,
-                            fit: BoxFit.fitHeight,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: () => setState(() => _imageFile = null),
-                          ),
-                        ],
+                      Container(
+                        decoration: SafeRoadTheme.cardDecoration,
+                        clipBehavior: Clip.hardEdge,
+                        child: Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            Image.file(
+                              _imageFile!,
+                              height: 300,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                            IconButton(
+                              icon:
+                                  const Icon(Icons.close, color: Colors.white),
+                              onPressed: () =>
+                                  setState(() => _imageFile = null),
+                            ),
+                          ],
+                        ),
                       ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Upload a photo or take a picture of the road damage',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.photo_library),
-                          label: const Text('Gallery'),
-                          onPressed: () => _pickImage(ImageSource.gallery),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: SafeRoadTheme.primaryButton,
+                            icon: const Icon(Icons.photo_library,
+                                color: Colors.white),
+                            label: const Text('Gallery'),
+                            onPressed: () => _pickImage(ImageSource.gallery),
+                          ),
                         ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text('Camera'),
-                          onPressed: () => _pickImage(ImageSource.camera),
+                        const SizedBox(
+                            width: 16), // Add spacing between buttons
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: SafeRoadTheme.primaryButton,
+                            icon: const Icon(Icons.camera_alt,
+                                color: Colors.white),
+                            label: const Text('Camera'),
+                            onPressed: () => _pickImage(ImageSource.camera),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Location field
                     TextFormField(
                       controller: _locationController,
-                      decoration: const InputDecoration(
+                      decoration: SafeRoadTheme.inputDecoration(
                         labelText: 'Location',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on),
+                        prefixIcon: const Icon(Icons.location_on),
                       ),
                       validator: (value) => value?.isEmpty ?? true
                           ? 'Please enter location'
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    // Description field
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(
+                      decoration: SafeRoadTheme.inputDecoration(
                         labelText: 'Description',
-                        border: OutlineInputBorder(),
-                        alignLabelWithHint: true,
+                        hintText: 'Describe the road damage...',
                       ),
                       maxLines: 3,
                       validator: (value) => value?.isEmpty ?? true
@@ -193,15 +221,12 @@ class _ReportScreenState extends State<ReportScreen>
                           : null,
                     ),
                     const SizedBox(height: 24),
-                    // Submit button
                     ElevatedButton(
+                      style: SafeRoadTheme.primaryButton,
                       onPressed: _submitReport,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          'Submit Report',
-                          style: TextStyle(fontSize: 18),
-                        ),
+                      child: const Text(
+                        'Submit Report',
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                   ],

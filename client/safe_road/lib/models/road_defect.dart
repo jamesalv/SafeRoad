@@ -31,7 +31,10 @@ class RoadDefect {
       ),
       streetName: json['location']['street_name'],
       heading: json['location']['heading'].toDouble(),
-      defectClasses: List<String>.from(json['defect_classes']),
+      defectClasses: List<String>.from(json['defect_classes'].map((str) => str
+          .split(' ')
+          .map((word) => word[0].toUpperCase() + word.substring(1))
+          .join(' '))),
       defectDetails: (json['defect_details'] as List)
           .map((detail) => DefectDetail.fromJson(detail))
           .toList(),

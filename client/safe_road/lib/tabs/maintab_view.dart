@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:safe_road/screens/map_screen.dart';
 import 'package:safe_road/screens/report_screen.dart';
+import 'package:safe_road/utils/theme.dart';
 
 class MainTab extends StatefulWidget {
   const MainTab({super.key});
@@ -25,14 +26,14 @@ class _MainTabState extends State<MainTab> {
     });
     pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.ease,
+      duration: const Duration(milliseconds: 300), // Slightly faster animation
+      curve: Curves.easeInOut, // Smoother animation curve
     );
   }
 
   @override
   void dispose() {
-    pageController.dispose(); // Always dispose of controllers to free resources
+    pageController.dispose();
     super.dispose();
   }
 
@@ -41,7 +42,7 @@ class _MainTabState extends State<MainTab> {
     return Scaffold(
       body: PageView(
         controller: pageController,
-        physics: const NeverScrollableScrollPhysics(), // Disable swiping
+        physics: const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
           setState(() {
             _selectedIndex = index;
@@ -52,19 +53,40 @@ class _MainTabState extends State<MainTab> {
           ReportScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.map),
-            label: 'Map',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.report),
-            label: 'Report',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(25),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          backgroundColor: SafeRoadTheme.background,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.map_outlined,
+                  color: _selectedIndex == 0
+                      ? SafeRoadTheme.primary
+                      : const Color.fromARGB(255, 177, 177, 177)),
+              selectedIcon: const Icon(Icons.map, color: SafeRoadTheme.primary),
+              label: 'Map',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.report_outlined,
+                  color: _selectedIndex == 1
+                      ? SafeRoadTheme.primary
+                      : const Color.fromARGB(255, 177, 177, 177)),
+              selectedIcon:
+                  const Icon(Icons.report, color: SafeRoadTheme.primary),
+              label: 'Report',
+            ),
+          ],
+        ),
       ),
     );
   }

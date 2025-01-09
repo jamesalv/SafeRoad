@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:safe_road/tabs/maintab_view.dart';
+import 'package:safe_road/screens/splash_screen.dart';
+import 'package:safe_road/utils/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,9 +14,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Safe Road',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: SafeRoadTheme.primary,
+        scaffoldBackgroundColor: SafeRoadTheme.background,
+        navigationBarTheme: SafeRoadTheme.navigationBarTheme,
+        useMaterial3: true, // Using Material 3 design
       ),
-      home: const MainTab(),
+      home: const SplashScreen(),
     );
   }
 }

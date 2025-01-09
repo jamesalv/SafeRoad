@@ -4,7 +4,7 @@ import 'package:safe_road/services/location_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:safe_road/models/road_defect.dart';
-
+import 'package:safe_road/utils/theme.dart';
 import 'package:safe_road/services/defect_service.dart';
 import 'package:safe_road/widgets/defect_details_sheet.dart';
 
@@ -70,9 +70,9 @@ class _MapScreenState extends State<MapScreen>
       debugPrint('Current Position: $currentPosition');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location Error: ${e.toString()}')),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Location Error: ${e.toString()}')),
+        // );
       }
     }
   }
@@ -143,7 +143,7 @@ class _MapScreenState extends State<MapScreen>
             circleId: const CircleId('searchRadius'),
             center: selectedLocation!,
             radius: radius,
-            fillColor: Colors.blue.withOpacity(0.2),
+            fillColor: Colors.blue.withAlpha(51),
             strokeColor: Colors.blue,
             strokeWidth: 2,
           ),
@@ -272,10 +272,19 @@ class _MapScreenState extends State<MapScreen>
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Safe Road'),
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Image.asset(
+            'assets/SafeRoad Text Black.png',
+            height: 20,
+            fit: BoxFit.contain,
+          ),
+        ),
+        backgroundColor: SafeRoadTheme.background,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.my_location),
+            icon: const Icon(Icons.my_location, color: SafeRoadTheme.primary),
             onPressed: _getCurrentLocation,
           ),
         ],
@@ -284,82 +293,132 @@ class _MapScreenState extends State<MapScreen>
         children: [
           Expanded(
             flex: 3,
-            child: GoogleMap(
-              onMapCreated: _onMapCreated,
-              onTap: _onMapTap,
-              initialCameraPosition: CameraPosition(
-                target: currentPosition ?? defaultPosition,
-                zoom: 14.0,
-              ),
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-              markers: markers,
-              circles: circles,
+            child: Stack(
+              children: [
+                GoogleMap(
+                  onMapCreated: _onMapCreated,
+                  onTap: _onMapTap,
+                  initialCameraPosition: CameraPosition(
+                    target: currentPosition ?? defaultPosition,
+                    zoom: 14.0,
+                  ),
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  markers: markers,
+                  circles: circles,
+                ),
+                if (isLoading)
+                  Container(
+                    color: Colors.black.withAlpha(77),
+                    child: Center(
+                      child: SafeRoadTheme.loadingIndicator(
+                        color: SafeRoadTheme.background,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else if (selectedLocation != null) ...[
-                    Text(
-                      'Selected Location:',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Lat: ${selectedLocation!.latitude.toStringAsFixed(6)}\n'
-                      'Lng: ${selectedLocation!.longitude.toStringAsFixed(6)}',
-                    ),
-                    const SizedBox(height: 8),
-                    if (selectedAddress != null)
-                      Text(
-                        'Address: $selectedAddress',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                  ] else
-                    Text(
-                      'Tap on the map to select a location',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: radiusController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Radius (km)',
-                            border: OutlineInputBorder(),
+          Container(
+            decoration: BoxDecoration(
+              color: SafeRoadTheme.background,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(13),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: AnimatedContainer(
+                duration: SafeRoadTheme.mediumAnimation,
+                height: selectedLocation != null ? 280 : 200,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (selectedLocation != null) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on,
+                              color: SafeRoadTheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedAddress ?? 'Loading address...',
+                                  style: SafeRoadTheme.bodyLarge,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  '${selectedLocation!.latitude.toStringAsFixed(6)}, '
+                                  '${selectedLocation!.longitude.toStringAsFixed(6)}',
+                                  style: SafeRoadTheme.bodyMedium.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          onChanged: (_) => _updateCircle(),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: pointsController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Number of Points',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _analyzeRoadDefects,
-                    child: const Text('Analyze Road Defects'),
-                  ),
-                ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: radiusController,
+                            keyboardType: TextInputType.number,
+                            decoration: SafeRoadTheme.inputDecoration(
+                              labelText: 'Radius (km)',
+                              prefixIcon:
+                                  const Icon(Icons.radio_button_checked),
+                            ),
+                            onChanged: (_) => _updateCircle(),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: pointsController,
+                            keyboardType: TextInputType.number,
+                            decoration: SafeRoadTheme.inputDecoration(
+                              labelText: 'Points',
+                              prefixIcon:
+                                  const Icon(Icons.location_on_outlined),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      style: SafeRoadTheme.primaryButton,
+                      onPressed:
+                          selectedLocation == null ? null : _analyzeRoadDefects,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.search, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text(
+                            selectedLocation == null
+                                ? 'Select Location First'
+                                : 'Analyze Road Defects',
+                            style: SafeRoadTheme.bodyLarge.copyWith(
+                              color: SafeRoadTheme.background,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

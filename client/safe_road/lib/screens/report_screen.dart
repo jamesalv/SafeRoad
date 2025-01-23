@@ -67,7 +67,7 @@ class _ReportScreenState extends State<ReportScreen>
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse("http://20.81.214.110:5000/report"),
+        Uri.parse("http://34.30.253.136:5000/report"),
       );
 
       request.files.add(

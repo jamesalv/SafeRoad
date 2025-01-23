@@ -6,7 +6,7 @@ import 'dart:convert';
 import '../models/road_defect.dart';
 
 class DefectService {
-  static const String baseUrl = "http://20.81.214.110:5000";
+  static const String baseUrl = "http://34.30.253.136:5000";
   // static const String baseUrl = "http://localhost:8000";
   // static const String baseUrl = 'http://127.0.0.1:5000';
 
